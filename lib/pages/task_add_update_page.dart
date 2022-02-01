@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:local_db/common/style.dart';
 import 'package:local_db/db_provider.dart';
-import 'package:local_db/task.dart';
+import 'package:local_db/models/task.dart';
 import 'package:local_db/widgets/description.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +20,17 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
   TextEditingController _descriptionController = TextEditingController();
 
   bool _isUpdate = false;
+  DateTime? date;
+  TimeOfDay? time;
+  String? _kategori;
+  List<String> hours = [];
+  List<String> minutes = [];
+  List<String> listKategori = [
+    'Tidak ada kategori',
+    'Kantor',
+    'Kuliah',
+    'Tugas'
+  ];
 
   @override
   void initState() {
@@ -26,7 +38,36 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
     if (widget.task != null) {
       _titleController.text = widget.task!.title;
       _descriptionController.text = widget.task!.description;
+      date = DateTime.parse(widget.task!.date);
+      hours.add(widget.task!.time.split("")[10]);
+      hours.add(widget.task!.time.split("")[11]);
+      minutes.add(widget.task!.time.split("")[13]);
+      minutes.add(widget.task!.time.split("")[14]);
+      time = TimeOfDay(
+        hour: int.parse(hours.join()),
+        minute: int.parse(minutes.join()),
+      );
       _isUpdate = true;
+    }
+  }
+
+  String getTextTime() {
+    if (time == null) {
+      return 'Select Time';
+    } else {
+      final hours = time!.hour.toString().padLeft(2, '0');
+      final minutes = time!.minute.toString().padLeft(2, '0');
+
+      return '$hours:$minutes';
+    }
+  }
+
+  String getTextDate() {
+    if (date == null) {
+      return 'Select Date';
+    } else {
+      return DateFormat('dd/MM/yyyy').format(date!);
+      // return '${date.month}/${date.day}/${date.year}';
     }
   }
 
@@ -40,7 +81,7 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
           child: Column(
             children: [
               Container(
-                height: MediaQuery.of(context).size.height * 0.13,
+                height: MediaQuery.of(context).size.height * 0.15,
                 child: Column(
                   children: [
                     Row(
@@ -56,20 +97,29 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                       children: [
                         Container(
                           margin: EdgeInsets.only(left: 20),
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+                          padding: EdgeInsets.symmetric(horizontal: 5),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             color: Colors.grey.shade200,
                           ),
-                          child: Row(
-                            children: [
-                              Text(
-                                'Kuliah',
-                                style: textTextStyle,
-                              ),
-                              Icon(Icons.arrow_drop_down_outlined),
-                            ],
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              borderRadius: BorderRadius.circular(10),
+                              style: textTextStyle.copyWith(fontSize: 12),
+                              value: _kategori,
+                              items: listKategori
+                                  .map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _kategori = value;
+                                });
+                              },
+                            ),
                           ),
                         ),
                       ],
@@ -78,7 +128,7 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                 ),
               ),
               Container(
-                height: MediaQuery.of(context).size.height * 0.83,
+                height: MediaQuery.of(context).size.height * 0.81,
                 child: ListView(
                   shrinkWrap: true,
                   children: [
@@ -98,21 +148,27 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                         Icons.calendar_today,
                         color: textColor,
                       ),
-                      desc: '',
-                      colorDesc: false,
+                      desc: getTextDate(),
+                      onTap: () {
+                        pickDate(context);
+                      },
                     ),
                     Divider(),
                     Description(
-                      title: 'Pengingat pada',
+                      title: 'Pengingat pada jam',
                       icon: Icon(
                         Icons.watch_later,
                         color: textColor,
                       ),
-                      desc: '5 menit sebelumnya',
+                      desc: getTextTime(),
+                      onTap: () {
+                        pickTime(context);
+                      },
                     ),
                     Description(
                       title: 'Jenis Pengingat',
                       desc: 'Notifikasi',
+                      onTap: () {},
                     ),
                     Divider(),
                     Description(
@@ -122,6 +178,7 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                         color: textColor,
                       ),
                       desc: 'Sabtu/1 Minggu',
+                      onTap: () {},
                     ),
                     Divider(),
                     Description(
@@ -131,6 +188,7 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                         color: textColor,
                       ),
                       desc: 'TAMBAH',
+                      onTap: () {},
                     ),
                     Divider(),
                     Description(
@@ -140,6 +198,7 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                         color: textColor,
                       ),
                       desc: 'TAMBAH',
+                      onTap: () {},
                     ),
                     SizedBox(
                       width: double.infinity,
@@ -148,8 +207,11 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                         onPressed: () async {
                           if (!_isUpdate) {
                             final task = Task(
-                                title: _titleController.text,
-                                description: _descriptionController.text);
+                              title: _titleController.text,
+                              description: _descriptionController.text,
+                              date: date!.toIso8601String(),
+                              time: time.toString(),
+                            );
                             Provider.of<DbProvider>(context, listen: false)
                                 .addTask(task);
                           } else {
@@ -157,6 +219,8 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                               id: widget.task!.id,
                               title: _titleController.text,
                               description: _descriptionController.text,
+                              date: date!.toIso8601String(),
+                              time: time.toString(),
                             );
                             Provider.of<DbProvider>(context, listen: false)
                                 .updateTask(task);
@@ -173,6 +237,34 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
         ),
       ),
     );
+  }
+
+  Future pickDate(BuildContext context) async {
+    final initialDate = DateTime.now();
+    final newDate = await showDatePicker(
+      context: context,
+      initialDate: date ?? initialDate,
+      firstDate: DateTime(DateTime.now().year),
+      lastDate: DateTime(DateTime.now().year + 5),
+    );
+
+    if (newDate == null) return;
+
+    setState(() => date = newDate);
+  }
+
+  Future pickTime(BuildContext context) async {
+    final initialTime =
+        TimeOfDay(hour: DateTime.now().hour, minute: DateTime.now().minute);
+    final newTime = await showTimePicker(
+      context: context,
+      initialTime: time ?? initialTime,
+    );
+    print(newTime);
+
+    if (newTime == null) return;
+
+    setState(() => time = newTime);
   }
 
   @override

@@ -1,4 +1,4 @@
-import 'package:local_db/task.dart';
+import 'package:local_db/models/task.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -27,7 +27,8 @@ class DatabaseHelper {
         await db.execute(
           '''CREATE TABLE $_task (
             id INTEGER PRIMARY KEY,
-            title TEXT, description TEXT
+            title TEXT, description TEXT,
+            date TEXT, time TEXT
           )''',
         );
       },

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:local_db/db_provider.dart';
-import 'package:local_db/task_add_update_page.dart';
+import 'package:local_db/pages/task_add_update_page.dart';
 import 'package:provider/provider.dart';
 
 class TaskListPage extends StatelessWidget {

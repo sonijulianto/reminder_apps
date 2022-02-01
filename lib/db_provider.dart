@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:local_db/database_helper.dart';
-import 'package:local_db/task.dart';
+import 'package:local_db/models/task.dart';
 
 class DbProvider extends ChangeNotifier {
   List<Task> _tasks = [];

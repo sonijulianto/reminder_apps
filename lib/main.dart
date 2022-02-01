@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:local_db/db_provider.dart';
-import 'package:local_db/task_list_page.dart';
+import 'package:local_db/pages/task_list_page.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
