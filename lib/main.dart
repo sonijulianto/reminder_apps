@@ -14,10 +14,6 @@ class MyApp extends StatelessWidget {
       create: (context) => DbProvider(),
       child: MaterialApp(
         title: 'Reminder Apps',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
         home: TaskListPage(),
       ),
     );
