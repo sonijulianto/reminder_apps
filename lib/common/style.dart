@@ -12,3 +12,6 @@ TextStyle blackTextStyle = GoogleFonts.poppins(
 TextStyle textTextStyle = GoogleFonts.poppins(
   color: textColor,
 );
+TextStyle testTextStyle = GoogleFonts.notoSans(
+  color: textColor,
+);
