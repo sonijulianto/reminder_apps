@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -12,6 +14,9 @@ TextStyle blackTextStyle = GoogleFonts.poppins(
 TextStyle textTextStyle = GoogleFonts.poppins(
   color: textColor,
 );
-TextStyle testTextStyle = GoogleFonts.notoSans(
-  color: textColor,
+
+TextStyle whiteTextStyle = GoogleFonts.poppins(
+  color: whiteColor,
 );
+
+FontWeight bold = FontWeight.w600;

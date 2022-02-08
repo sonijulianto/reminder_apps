@@ -1,15 +1,21 @@
+// ignore_for_file: must_be_immutable
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:local_db/common/style.dart';
 import 'package:local_db/db_provider.dart';
+import 'package:local_db/functions/menghitung_jam_pengingat.dart';
 import 'package:local_db/models/task.dart';
+import 'package:local_db/widgets/custom_dialog.dart';
 import 'package:local_db/widgets/description.dart';
 import 'package:provider/provider.dart';
 
 class TaskAddUpdatePage extends StatefulWidget {
   final Task? task;
+  final List<bool>? isChecked;
+  static TimeOfDay? time;
 
-  TaskAddUpdatePage([this.task]);
+  TaskAddUpdatePage({this.task, this.isChecked});
 
   @override
   _TaskAddUpdatePageState createState() => _TaskAddUpdatePageState();
@@ -19,12 +25,15 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
   TextEditingController _titleController = TextEditingController();
   TextEditingController _descriptionController = TextEditingController();
 
+  bool valuefirst = false;
+  bool isSwitched = true;
   bool _isUpdate = false;
   DateTime? date;
-  TimeOfDay? time;
   String? _kategori;
   List<String> hours = [];
   List<String> minutes = [];
+  int? hour;
+  int? minute;
   List<String> listKategori = [
     'Tidak ada kategori',
     'Kantor',
@@ -38,25 +47,32 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
     if (widget.task != null) {
       _titleController.text = widget.task!.title;
       _descriptionController.text = widget.task!.description;
-      date = DateTime.parse(widget.task!.date);
-      hours.add(widget.task!.time.split("")[10]);
-      hours.add(widget.task!.time.split("")[11]);
-      minutes.add(widget.task!.time.split("")[13]);
-      minutes.add(widget.task!.time.split("")[14]);
-      time = TimeOfDay(
-        hour: int.parse(hours.join()),
-        minute: int.parse(minutes.join()),
-      );
+      if (widget.task!.date != 'Select Date') {
+        date = DateTime.parse(widget.task!.date);
+      }
+      if (widget.task!.time != 'Select Time') {
+        hours.add(widget.task!.time.split("")[10]);
+        hours.add(widget.task!.time.split("")[11]);
+        minutes.add(widget.task!.time.split("")[13]);
+        minutes.add(widget.task!.time.split("")[14]);
+        hour = int.parse(hours.join());
+        minute = int.parse(minutes.join());
+        TaskAddUpdatePage.time = TimeOfDay(
+          hour: hour!,
+          minute: minute!,
+        );
+      }
+
       _isUpdate = true;
     }
   }
 
   String getTextTime() {
-    if (time == null) {
+    if (TaskAddUpdatePage.time == null) {
       return 'Select Time';
     } else {
-      final hours = time!.hour.toString().padLeft(2, '0');
-      final minutes = time!.minute.toString().padLeft(2, '0');
+      final hours = TaskAddUpdatePage.time!.hour.toString().padLeft(2, '0');
+      final minutes = TaskAddUpdatePage.time!.minute.toString().padLeft(2, '0');
 
       return '$hours:$minutes';
     }
@@ -107,8 +123,7 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                               borderRadius: BorderRadius.circular(10),
                               style: textTextStyle.copyWith(fontSize: 12),
                               value: _kategori,
-                              items: listKategori
-                                  .map((String value) {
+                              items: listKategori.map((String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
                                   child: Text(value),
@@ -151,11 +166,12 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                       desc: getTextDate(),
                       onTap: () {
                         pickDate(context);
+                        print(date);
                       },
                     ),
                     Divider(),
                     Description(
-                      title: 'Pengingat pada jam',
+                      title: 'Waktu dan Pengingat',
                       icon: Icon(
                         Icons.watch_later,
                         color: textColor,
@@ -165,11 +181,29 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                         pickTime(context);
                       },
                     ),
-                    Description(
-                      title: 'Jenis Pengingat',
-                      desc: 'Notifikasi',
-                      onTap: () {},
-                    ),
+                    TaskAddUpdatePage.time != null
+                        ? Description(
+                            title: 'Pengingat pada',
+                            desc: beforeFiveMin(TaskAddUpdatePage.time!.hour,
+                                        TaskAddUpdatePage.time!.minute)[0]
+                                    .toString() +
+                                ':' +
+                                beforeFiveMin(TaskAddUpdatePage.time!.hour,
+                                        TaskAddUpdatePage.time!.minute)[1]
+                                    .toString(),
+                            onTap: () {
+                              showConfirmationDialog(context);
+                              print(widget.isChecked);
+                            },
+                          )
+                        : SizedBox(),
+                    TaskAddUpdatePage.time != null
+                        ? Description(
+                            title: 'Jenis Pengingat',
+                            desc: 'Notifikasi',
+                            onTap: () {},
+                          )
+                        : SizedBox(),
                     Divider(),
                     Description(
                       title: 'Ulangi tugas',
@@ -200,6 +234,15 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                       desc: 'TAMBAH',
                       onTap: () {},
                     ),
+                    CheckboxListTile(
+                      value: this.valuefirst,
+                      title: const Text('Ringing at 4:30 AM every day'),
+                      onChanged: (bool? value) {
+                        setState(() {
+                          this.valuefirst = value!;
+                        });
+                      },
+                    ),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -209,8 +252,12 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                             final task = Task(
                               title: _titleController.text,
                               description: _descriptionController.text,
-                              date: date!.toIso8601String(),
-                              time: time.toString(),
+                              date: date != null
+                                  ? date!.toIso8601String()
+                                  : 'Select Date',
+                              time: TaskAddUpdatePage.time != null
+                                  ? TaskAddUpdatePage.time.toString()
+                                  : 'Select Time',
                             );
                             Provider.of<DbProvider>(context, listen: false)
                                 .addTask(task);
@@ -219,8 +266,12 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                               id: widget.task!.id,
                               title: _titleController.text,
                               description: _descriptionController.text,
-                              date: date!.toIso8601String(),
-                              time: time.toString(),
+                              date: date != null
+                                  ? date!.toIso8601String()
+                                  : 'Select Date',
+                              time: TaskAddUpdatePage.time != null
+                                  ? TaskAddUpdatePage.time.toString()
+                                  : 'Select Time',
                             );
                             Provider.of<DbProvider>(context, listen: false)
                                 .updateTask(task);
@@ -258,13 +309,13 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
         TimeOfDay(hour: DateTime.now().hour, minute: DateTime.now().minute);
     final newTime = await showTimePicker(
       context: context,
-      initialTime: time ?? initialTime,
+      initialTime: TaskAddUpdatePage.time ?? initialTime,
     );
     print(newTime);
 
     if (newTime == null) return;
 
-    setState(() => time = newTime);
+    setState(() => TaskAddUpdatePage.time = newTime);
   }
 
   @override
@@ -272,5 +323,15 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  showConfirmationDialog(BuildContext context) {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return CustomDialog();
+      },
+    );
   }
 }
