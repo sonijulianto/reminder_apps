@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:local_db/common/style.dart';
 import 'package:local_db/db_provider.dart';

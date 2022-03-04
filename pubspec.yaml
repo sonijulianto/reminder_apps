@@ -30,11 +30,12 @@ dependencies:
   cupertino_icons: ^1.0.3
   sqflite: ^2.0.0+3
   path: ^1.8.0
-  provider: ^5.0.0
-  google_fonts: ^2.2.0
-  table_calendar: ^3.0.3
-  syncfusion_flutter_calendar: ^19.4.48
+  provider: ^6.0.2
+  google_fonts: 2.2.0
   intl: ^0.17.0
+  flutter_local_notifications: ^9.3.2
+  rxdart: ^0.27.3
+  android_alarm_manager_plus: ^2.0.5
 
 dev_dependencies:
   flutter_test:

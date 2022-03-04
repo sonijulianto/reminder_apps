@@ -1,12 +1,16 @@
 // ignore_for_file: must_be_immutable
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:local_db/common/style.dart';
 import 'package:local_db/db_provider.dart';
 import 'package:local_db/functions/menghitung_jam_pengingat.dart';
 import 'package:local_db/models/task.dart';
+import 'package:local_db/provider/scheduling_provider.dart';
 import 'package:local_db/widgets/custom_dialog.dart';
+import 'package:local_db/widgets/custom_dialog_notification.dart';
 import 'package:local_db/widgets/description.dart';
 import 'package:provider/provider.dart';
 
@@ -234,14 +238,25 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
                       desc: 'TAMBAH',
                       onTap: () {},
                     ),
-                    CheckboxListTile(
-                      value: this.valuefirst,
-                      title: const Text('Ringing at 4:30 AM every day'),
-                      onChanged: (bool? value) {
-                        setState(() {
-                          this.valuefirst = value!;
-                        });
-                      },
+                    Material(
+                      child: ListTile(
+                        title: Text('Scheduling News'),
+                        trailing: Consumer<SchedulingProvider>(
+                          builder: (context, scheduled, _) {
+                            return Switch.adaptive(
+                              value: scheduled.isScheduled,
+                              onChanged: (value) async {
+                                if (Platform.isIOS) {
+                                  customDialog(context);
+                                } else {
+                                  scheduled.scheduledNews(value);
+                                }
+                              },
+                            );
+                          },
+                          child: Text('data'),
+                        ),
+                      ),
                     ),
                     SizedBox(
                       width: double.infinity,
@@ -305,16 +320,20 @@ class _TaskAddUpdatePageState extends State<TaskAddUpdatePage> {
   }
 
   Future pickTime(BuildContext context) async {
+    var scheduling = Provider.of<SchedulingProvider>(context, listen: false);
     final initialTime =
         TimeOfDay(hour: DateTime.now().hour, minute: DateTime.now().minute);
     final newTime = await showTimePicker(
       context: context,
       initialTime: TaskAddUpdatePage.time ?? initialTime,
     );
-    print(newTime);
+    // print('${newTime.hour}:${newTime.minute}');
 
     if (newTime == null) return;
 
+    scheduling.time = '${newTime.hour}:${newTime.minute}';
+    // scheduling.titleTask = _titleController.text;
+    scheduling.scheduledNews(true);
     setState(() => TaskAddUpdatePage.time = newTime);
   }
 
